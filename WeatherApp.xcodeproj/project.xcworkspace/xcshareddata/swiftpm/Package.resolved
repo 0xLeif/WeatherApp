@@ -2,11 +2,20 @@
   "object": {
     "pins": [
       {
+        "package": "EKit",
+        "repositoryURL": "https://github.com/0xLeif/EKit",
+        "state": {
+          "branch": "master",
+          "revision": "5a1a7aef6b12b556b2a97f0ee01551c5fac7b3c0",
+          "version": null
+        }
+      },
+      {
         "package": "SwiftUIKit",
         "repositoryURL": "https://github.com/0xLeif/SwiftUIKit",
         "state": {
           "branch": "develop",
-          "revision": "a595e12fe4f4a9658211fb3ee23110f854ed0e06",
+          "revision": "e76dafd40e15201a45803d5e68d4f6eb24e83617",
           "version": null
         }
       }

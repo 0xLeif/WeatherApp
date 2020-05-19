@@ -1,19 +1,23 @@
 import UIKit
 import SwiftUIKit
 import Combine
+import EKit
 
 enum WeatherType: String {
-    case clear
-    case clouds
+    case clear, clouds, rain, mist
 }
 
 extension WeatherType {
     var emoji: String {
         switch self {
         case .clear:
-            return "☀️"
+            return E.sun.rawValue
         case .clouds:
-            return "☁️"
+            return E.cloud.rawValue
+        case .rain:
+            return E.cloud_with_rain.rawValue
+        case .mist:
+            return E.fog.rawValue
         }
     }
 }
@@ -21,59 +25,7 @@ extension WeatherType {
 class ViewController: UIViewController {
     var bag = [AnyCancellable]()
     var table = TableView()
-    let zipcodes = ["26554",
-    "Fairmont, WV",
-    "29483",
-    "Summerville, SC",
-    "45103",
-    "Batavia, OH",
-    "61821",
-    "43035",
-    "43612",
-    "Toledo, OH",
-    "16101",
-    "New Castle, PA",
-    "36109",
-    "Montgomery, AL",
-    "44012",
-    "Avon Lake, OH",
-    "32159",
-    "Lady Lake, FL",
-    "46383",
-    "Valparaiso, IN",
-    "48150",
-    "Livonia, MI",
-    "60062",
-    "Northbrook, IL",
-    "78023",
-    "Helotes, TX",
-    "48205",
-    "Detroit, MI",
-    "19061",
-    "Marcus Hook, PA",
-    "43040",
-    "Marysville, OH",
-    "30721",
-    "Dalton, GA",
-    "01970",
-    "Salem, MA",
-    "95050",
-    "Santa Clara, CA",
-    "14075",
-    "Hamburg, NY",
-    "43081",
-    "Westerville, OH",
-    "46060",
-    "Noblesville, IN",
-    "27529",
-    "Garner, NC",
-    "07731",
-    "Howell, NJ",
-    "29577",
-    "Myrtle Beach, SC",
-    "33952",
-    "Port Charlotte, FL",
-    "01876"]
+    let zipcodes = ["26554"]
         .compactMap { Int($0) }
     var data: [WeatherForecast] = [] {
         didSet {
@@ -108,44 +60,8 @@ class ViewController: UIViewController {
             ])
             .setRight(barButton: UIBarButtonItem {
                 Button("Add") {
-                    Navigate.shared.go(UIViewController {
-                        UIView(backgroundColor: .white) {
-                            var zipcodeValue: Int?
-                            
-                            return VStack {
-                                [
-                                    HStack {
-                                        [
-                                            Button("Cancel") {
-                                                Navigate.shared.dismiss()
-                                            },
-                                            Spacer(),
-                                            Button("Add") {
-                                                print("Do stuff")
-                                                guard let zipcode = zipcodeValue else {
-                                                    Navigate.shared.toast(style: .error, pinToTop: true, secondsToPersist: 3, padding: 16) {
-                                                        Label("Zipcode Required!")
-                                                    }
-                                                    return
-                                                }
-                                                
-                                                self.fetch(zipCodeWeather: zipcode)
-                                                Navigate.shared.dismiss()
-                                            }
-                                        ]
-                                    }
-                                    .padding(8),
-                                    Label("Zipcode").text(alignment: .center),
-                                    Field(value: "", placeholder: "12345", keyboardType: .numberPad)
-                                        .inputHandler { (value) in
-                                        zipcodeValue = Int(value)
-                                    },
-                                    Spacer()
-                                ]
-                            }
-                        .padding()
-                        }
-                    }, style: .modal)
+                    Navigate.shared.go(AddViewController()
+                        .configure { $0.delegate = self }, style: .modal)
                 }
             })
         
@@ -154,6 +70,7 @@ class ViewController: UIViewController {
             .footerView { _ in UIView() }
             .canEditRowAtIndexPath { _ in true }
             .canMoveRowAtIndexPath { _ in true }
+            .shouldHighlightRowAtIndexPath { _ in true }
             .editingStyleForRowAtIndexPath { _ in .delete }
             .commitEditingStyleForRowAtIndexPath({ (style, path) in
                 self.data.remove(at: path.row)
@@ -176,9 +93,48 @@ class ViewController: UIViewController {
                 })
             ])
         }
+        .didSelectRowAtIndexPath { (path) in
+            let data = self.data[path.row]
+            
+            Navigate.shared.go(
+                UIViewController {
+                    UIView(backgroundColor: .white) {
+                        SafeAreaView {
+                            VStack {
+                                [
+                                    UIView {
+                                        Label.title1("\(data.main.temp)F")
+                                            .text(alignment: .center)
+                                            .font(UIFont.boldSystemFont(ofSize: 72))
+                                    }.frame(height: 200),
+                                    List {
+                                        [
+                                            Label.title1(data.name),
+                                            Label("\(data.weather.first?.main ?? "") (\(data.weather.first?.description ?? "..."))")
+                                        ]
+                                    }
+                                    .configure {
+                                        $0.allowsSelection = false
+                                    }
+                                ]
+                            }
+                        }
+                        
+                    }
+            }, style: .push)
+        }
         
         view.embed {
-            table
+            VStack {
+                [
+                    table,
+                    ContainerView(parent: self) {
+                        AddViewController()
+                            .configure { $0.delegate = self }
+                    }
+                    .frame(height: 164)
+                ]
+            }
         }
         
         zipcodes.forEach {
@@ -200,5 +156,11 @@ class ViewController: UIViewController {
                     self.data.append(weather)
                 }
         }.store(in: &bag)
+    }
+}
+
+extension ViewController: ItemAddable {
+    func add(zipcode: Int) {
+        fetch(zipCodeWeather: zipcode)
     }
 }

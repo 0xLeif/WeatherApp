@@ -23,43 +23,28 @@ extension WeatherCell: TableViewCell {
             return
         }
         
+        
         contentView
             .clear()
             .embed(withPadding: 8) {
-                Button({ Navigate.shared.go(UIViewController {
-                    UIView(backgroundColor: .white) {
-                        SafeAreaView {
+                HStack {
+                    [
                         VStack {
                             [
-                                Label("\(data.main.temp)F"),
-                                Label(data.name),
-                                Label(data.weather.first?.main ?? ""),
-                                Label(data.weather.first?.description ?? ""),
-                                Spacer()
-                            ]
-                        }
-                        }
-                        
-                    }
-                }, style: .push) }) {
-                    HStack {
-                        [
-                            VStack {
-                                [
-                                    HStack(withSpacing: 4) {
-                                        [
+                                HStack(withSpacing: 4) {
+                                    [
                                         self.nameLabel,
                                         self.weatherTitle
-                                        ]
-                                    },
-                                    self.zipcodeLabel
-                                ]
-                            },
-                            Spacer(),
-                            self.temp
-                        ]
-                    }
+                                    ]
+                                },
+                                self.zipcodeLabel
+                            ]
+                        },
+                        Spacer(),
+                        self.temp
+                    ]
                 }
+                
         }
     }
     
